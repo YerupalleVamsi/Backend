@@ -31,4 +31,7 @@ app.post("/echo",(req,res)=>{
 
 });
 
+// - Add a `GET /time` route returning current UTC time in ISO format
+// - Add a `GET /headers` route that returns the request headers as JSON
+
 module.exports = app;
