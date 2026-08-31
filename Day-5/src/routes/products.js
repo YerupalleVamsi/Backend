@@ -2,10 +2,9 @@ const express = require('express');
 
 const router =  express.Router();
 
-let products = [
-    {id:1,name:"Laptop",price:999,category:"electronics"},
-    {id:2,name:"Desk",price:299,category:"furniture"}
-]
+const auth = require('../middleware/auth');
+
+const products = require('../data/products');
 
 let nextId = 3;
 
@@ -13,7 +12,7 @@ function findProductIndex(id){
     return products.findIndex(p => p.id === Number(id));
 }
 
-router.get('/',(req,res)=>{
+router.get('/',auth,(req,res)=>{
     const {category , sort} = req.query;
 
     let result = products.slice();
@@ -30,7 +29,7 @@ router.get('/',(req,res)=>{
 
 });
 
-router.get('/:id',(req,res)=>{
+router.get('/:id',auth,(req,res)=>{
 
     const id = Number(req.params.id);
     const product = products.find(p=>p.id === id);
@@ -42,7 +41,7 @@ router.get('/:id',(req,res)=>{
 
 });
 
-router.post('/',(req,res)=>{
+router.post('/',auth,(req,res)=>{
 
     const {name,price,category} = req.body;
 
@@ -56,7 +55,7 @@ router.post('/',(req,res)=>{
 
 });
 
-router.put('/:id',(req,res)=>{
+router.put('/:id',auth,(req,res)=>{
 
     const {name,price,category} = req.body;
 
@@ -80,7 +79,7 @@ router.put('/:id',(req,res)=>{
 });
 
 
-router.patch('/:id',(req,res)=>{
+router.patch('/:id',auth,(req,res)=>{
 
     const idx = findProductIndex(req.params.id);
 
@@ -101,11 +100,11 @@ router.patch('/:id',(req,res)=>{
 
 });
 
-router.delete('/:id',(req,res)=>{
+router.delete('/:id',auth,(req,res)=>{
 
     const idx = findProductIndex(req.params.id);
 
-    if(idx===-1){
+    if(idx==-1){
         return res.status(404).json({error:  "Product not found"});
     }
 
@@ -115,7 +114,7 @@ router.delete('/:id',(req,res)=>{
 
 });
 
-router.get('/:id/related',(req,res)=>{
+router.get('/:id/related',auth,(req,res)=>{
 
     const id = Number(req.params.id);
     const product = products.find(p => p.id === id);
