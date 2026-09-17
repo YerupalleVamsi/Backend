@@ -1,7 +1,13 @@
+const AppError = require("../utils/AppError");
+
 function errorHandler(err, req, res, next) {
-  console.error(`[${req.id}]`, err);
-  const status = err.status || 500;
-  res.status(status).json({ error: err.message, requestId: req.id });
+  console.error(err);
+
+  if (err instanceof AppError) {
+    return res.status(err.status).json({ error: err.message });
+  }
+
+  res.status(500).json({ error: "Internal server error" });
 }
 
 module.exports = errorHandler;

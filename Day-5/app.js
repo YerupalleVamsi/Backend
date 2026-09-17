@@ -15,6 +15,17 @@ app.use(requestId);
 // Routes
 app.use('/products', productsRouter);
 
+// Test route to verify the error handler
+app.get('/error-test', () => {
+  const errors = [
+    () => { throw new Error('Random failure: file not found'); },
+    () => { throw new TypeError('Random failure: cannot read property of undefined'); },
+    () => { null.boom(); },
+  ];
+  const random = errors[Math.floor(Math.random() * errors.length)];
+  random();
+});
+
 // 404 handler
 app.use(notFound);
 

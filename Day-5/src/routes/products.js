@@ -6,13 +6,34 @@ const auth = require('../middleware/auth');
 
 const products = require('../data/products');
 
+const AppError = require('../utils/AppError');
+const asyncHandler = require('../utils/asyncHandler');
+
 let nextId = 3;
 
 function findProductIndex(id){
     return products.findIndex(p => p.id === Number(id));
 }
 
-router.get('/',auth,(req,res)=>{
+function validateProductInput({ name, price, category }){
+    if(!name){
+        throw new AppError("Name is required", 400);
+    }
+
+    if(price === undefined || Number.isNaN(Number(price))){
+        throw new AppError("Price must be positive", 400);
+    }
+
+    if(Number(price) < 0){
+        throw new AppError("Price must be positive", 400);
+    }
+
+    if(!category){
+        throw new AppError("Category is required", 400);
+    }
+}
+
+router.get('/',auth,asyncHandler(async (req,res)=>{
     const {category , sort} = req.query;
 
     let result = products.slice();
@@ -27,47 +48,43 @@ router.get('/',auth,(req,res)=>{
 
     res.json(result);
 
-});
+}));
 
-router.get('/:id',auth,(req,res)=>{
+router.get('/:id',auth,asyncHandler(async (req,res)=>{
 
     const id = Number(req.params.id);
     const product = products.find(p=>p.id === id);
 
     if(!product){
-        return res.status(404).json({error: "Product not found"});
+        throw new AppError("Product not found", 404);
     }
     res.json(product);
 
-});
+}));
 
-router.post('/',auth,(req,res)=>{
+router.post('/',auth,asyncHandler(async (req,res)=>{
 
     const {name,price,category} = req.body;
 
-    if(!name || price === undefined || !category){
-        return res.status(400).json({error:"Missing required fields : name,price,category"});
-    }
+    validateProductInput({ name, price, category });
 
     const newProduct = {id : nextId++,  name,price:Number(price) , category};
     products.push(newProduct);
     res.status(201).json(newProduct);
 
-});
+}));
 
-router.put('/:id',auth,(req,res)=>{
+router.put('/:id',auth,asyncHandler(async (req,res)=>{
 
     const {name,price,category} = req.body;
 
     const idx = findProductIndex(req.params.id);
-    
+
     if(idx==-1){
-        return res.status(404).json({error: "Product not found"});
+        throw new AppError("Product not found", 404);
     }
 
-    if(!name || price === undefined || !category){
-        return res.status(400).json({error:"Missing required fields : name,price,category"});
-    }
+    validateProductInput({ name, price, category });
 
     const updated = {id : products[idx].id , name , price: Number(price), category};
 
@@ -76,15 +93,23 @@ router.put('/:id',auth,(req,res)=>{
     res.json(updated);
 
 
-});
+}));
 
 
-router.patch('/:id',auth,(req,res)=>{
+router.patch('/:id',auth,asyncHandler(async (req,res)=>{
 
     const idx = findProductIndex(req.params.id);
 
     if(idx==-1){
-        return res.status(404).json({error: "Product not found"});
+        throw new AppError("Product not found", 404);
+    }
+
+    if('name' in req.body && !req.body.name){
+        throw new AppError("Name is required", 400);
+    }
+
+    if('price' in req.body && (Number.isNaN(Number(req.body.price)) || Number(req.body.price) < 0)){
+        throw new AppError("Price must be positive", 400);
     }
 
     const product = products[idx];
@@ -98,32 +123,32 @@ router.patch('/:id',auth,(req,res)=>{
     products[idx] = product;
     res.json(product);
 
-});
+}));
 
-router.delete('/:id',auth,(req,res)=>{
+router.delete('/:id',auth,asyncHandler(async (req,res)=>{
 
     const idx = findProductIndex(req.params.id);
 
     if(idx==-1){
-        return res.status(404).json({error:  "Product not found"});
+        throw new AppError("Product not found", 404);
     }
 
     products.splice(idx,1);
     res.status(204).send();
 
 
-});
+}));
 
-router.get('/:id/related',auth,(req,res)=>{
+router.get('/:id/related',auth,asyncHandler(async (req,res)=>{
 
     const id = Number(req.params.id);
     const product = products.find(p => p.id === id);
     if(!product){
-        return res.status(404).json({error: "product not found"});
+        throw new AppError("Product not found", 404);
     }
     const related = products.filter(p => p.category === product.category && p.id!== id);
     res.json(related);
-    
-});
+
+}));
 
 module.exports = router;
